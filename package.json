@@ -114,7 +114,7 @@
     "tailwind-merge": "^3.3.1",
     "use-debounce": "^10.0.5",
     "use-places-autocomplete": "^4.0.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
