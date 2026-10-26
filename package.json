@@ -80,7 +80,7 @@
     "@supabase/supabase-js": "^2.86.0",
     "@tailwindcss/forms": "^0.5.10",
     "@tanstack/react-query": "^5.104.3",
-    "@turf/centroid": "^7.2.0",
+    "@turf/centroid": "^7.4.0",
     "@turf/turf": "^7.2.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@vercel/postgres": "^0.10.0",

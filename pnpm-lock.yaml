@@ -39,8 +39,8 @@ importers:
         specifier: ^5.104.3
         version: 5.104.3(react@19.2.3)
       '@turf/centroid':
-        specifier: ^7.2.0
-        version: 7.3.5
+        specifier: ^7.4.0
+        version: 7.4.0
       '@turf/turf':
         specifier: ^7.2.0
         version: 7.3.5
@@ -1034,6 +1034,9 @@ packages:
   '@turf/centroid@7.3.5':
     resolution: {integrity: sha512-hkWaqwGFdOn6Tf0EWfn2yn1XZ1FWE1h2C5ZWstDMu/FxYO5DB+YjlmOFPl4K6SmSOEgdV07eK2vDCyPeTHqKGA==}
 
+  '@turf/centroid@7.4.0':
+    resolution: {integrity: sha512-WglCFe+TnMqeYa/LcbUp37NgIF0zHTNYmlxwUm40fyyzyLsYeDq4dgFWLTYpvRNqb5oIMV6xsBjSf+vCPtVJ6w==}
+
   '@turf/circle@7.3.5':
     resolution: {integrity: sha512-Tse7GJrx0rxaQ5BdY6pHZ9HFPrZwRMry2yaqq94UsUyonhy1m7U2icB3Zp4M8o4XjHIGTCq9i2BYcGJram51Sw==}
 
@@ -1106,6 +1109,9 @@ packages:
   '@turf/helpers@7.3.5':
     resolution: {integrity: sha512-E/NMGV5MwbjjP7AJXBtsanC3yY8N2MQ87IGdIgkB2ji5AtBpwnH4L3gEqpYN4RlCJJWbLbzO91BbKv2waUd0eg==}
 
+  '@turf/helpers@7.4.0':
+    resolution: {integrity: sha512-7PAwLZqOdRzTI5g9bHvUwlloAXPDH/mlajtryk0tw4ZwGMtmXsAyF4QundsAMfy4u48Fyd3AUqMXY0SMxqJGWg==}
+
   '@turf/hex-grid@7.3.5':
     resolution: {integrity: sha512-sPtYXqbNvUxt8h4NzspcoFAVotd/75LgrLxxI84LGIVPCN+fsK1uWwr4a6MAlzfSbWbOYOq7OSWMSSXzHoQzJg==}
 
@@ -1168,6 +1174,9 @@ packages:
 
   '@turf/meta@7.3.5':
     resolution: {integrity: sha512-r+ohqxoyqeigFB0oFrQx/YEHIkOKqcKpCjvZkvZs7Tkv+IFco5MezAd2zd4rzK+0DfFgDP3KpJc7HqrYjvEjhg==}
+
+  '@turf/meta@7.4.0':
+    resolution: {integrity: sha512-3cLUvlEyDuSnMSzrjhaLAEiYR8xhbfWyTVQlrlEw40xL81d4KF4PqUWbjTXKpXZStdYbet2GCurl79KMypNw6g==}
 
   '@turf/midpoint@7.3.5':
     resolution: {integrity: sha512-y92O2YDDBkZp7jAUuUPgof/HiXHjJSkKjEtQRjWXZcjTlzHd/Fqg6/twarY2wNkENK2EuaaiV9MDy74FeRG2Ow==}
@@ -4552,6 +4561,13 @@ snapshots:
       '@types/geojson': 7946.0.16
       tslib: 2.8.1
 
+  '@turf/centroid@7.4.0':
+    dependencies:
+      '@turf/helpers': 7.4.0
+      '@turf/meta': 7.4.0
+      '@types/geojson': 7946.0.16
+      tslib: 2.8.1
+
   '@turf/circle@7.3.5':
     dependencies:
       '@turf/destination': 7.3.5
@@ -4752,6 +4768,11 @@ snapshots:
       '@types/geojson': 7946.0.16
       tslib: 2.8.1
 
+  '@turf/helpers@7.4.0':
+    dependencies:
+      '@types/geojson': 7946.0.16
+      tslib: 2.8.1
+
   '@turf/hex-grid@7.3.5':
     dependencies:
       '@turf/distance': 7.3.5
@@ -4934,6 +4955,12 @@ snapshots:
   '@turf/meta@7.3.5':
     dependencies:
       '@turf/helpers': 7.3.5
+      '@types/geojson': 7946.0.16
+      tslib: 2.8.1
+
+  '@turf/meta@7.4.0':
+    dependencies:
+      '@turf/helpers': 7.4.0
       '@types/geojson': 7946.0.16
       tslib: 2.8.1
 
