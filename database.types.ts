@@ -43,7 +43,7 @@ export type Database = {
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [],
       }
       asset_slots: {
         Row: {
@@ -2815,7 +2815,255 @@ export type Database = {
           retired_at?: string | null
           usd_cents_per_credit?: number
         }
-        Relationships: []
+        Relationships: [],
+      }
+      service_availability_rules: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          effective_from: string | null
+          effective_until: string | null
+          end_time: string
+          id: string
+          is_active: boolean
+          service_offering_id: string
+          start_time: string
+          timezone: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          effective_from?: string | null
+          effective_until?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean
+          service_offering_id: string
+          start_time: string
+          timezone?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          effective_from?: string | null
+          effective_until?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          service_offering_id?: string
+          start_time?: string
+          timezone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_availability_rules_service_offering_id_fkey"
+            columns: ["service_offering_id"]
+            isOneToOne: false
+            referencedRelation: "service_offerings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_locations: {
+        Row: {
+          address1: string | null
+          address2: string | null
+          city: string | null
+          country: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          label: string | null
+          latitude: number | null
+          location_type: string
+          longitude: number | null
+          postal: string | null
+          service_offering_id: string
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          label?: string | null
+          latitude?: number | null
+          location_type?: string
+          longitude?: number | null
+          postal?: string | null
+          service_offering_id: string
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          label?: string | null
+          latitude?: number | null
+          location_type?: string
+          longitude?: number | null
+          postal?: string | null
+          service_offering_id?: string
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_locations_service_offering_id_fkey"
+            columns: ["service_offering_id"]
+            isOneToOne: false
+            referencedRelation: "service_offerings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_offering_prices: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency_code: string
+          id: string
+          is_default: boolean
+          service_offering_id: string
+          unit_label: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency_code?: string
+          id?: string
+          is_default?: boolean
+          service_offering_id: string
+          unit_label?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency_code?: string
+          id?: string
+          is_default?: boolean
+          service_offering_id?: string
+          unit_label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_offering_prices_service_offering_id_fkey"
+            columns: ["service_offering_id"]
+            isOneToOne: false
+            referencedRelation: "service_offerings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_offerings: {
+        Row: {
+          configuration: Json
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          provider_id: string
+          service_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          configuration?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          provider_id: string
+          service_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          configuration?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          provider_id?: string
+          service_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_offerings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_providers: {
+        Row: {
+          bio: string | null
+          created_at: string
+          display_name: string
+          entity_id: string | null
+          id: string
+          profile_id: string | null
+          slug: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          display_name: string
+          entity_id?: string | null
+          id?: string
+          profile_id?: string | null
+          slug?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          display_name?: string
+          entity_id?: string | null
+          id?: string
+          profile_id?: string | null
+          slug?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_providers_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: true
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_providers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       businesses: {
         Row: {
