@@ -128,6 +128,9 @@ function UserPopover({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
+  const menuItemClass =
+    "flex items-center gap-2 px-3 py-2 text-base hover:bg-brand-secondary-0";
+
   return (
     <div className="relative" ref={popoverRef}>
       <button
@@ -151,7 +154,7 @@ function UserPopover({
                 <li>
                   <a
                     href="/account"
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-brand-secondary-0"
+                    className={menuItemClass}
                     onClick={() => setOpen(false)}
                   >
                     Profile
@@ -160,7 +163,7 @@ function UserPopover({
                 <li>
                   <button
                     type="button"
-                    className="w-full text-left px-3 py-2 hover:bg-brand-secondary-0"
+                    className={`${menuItemClass} w-full text-left`}
                     onClick={handleSignOut}
                   >
                     Log out

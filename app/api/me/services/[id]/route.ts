@@ -32,6 +32,7 @@ export async function PATCH(
       user.id,
       params.id,
       status as "draft" | "published" | "paused" | "archived",
+      supabase,
     );
     return NextResponse.json({ ok: true });
   } catch (error) {

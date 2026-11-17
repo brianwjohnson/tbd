@@ -6,20 +6,20 @@ import {
 } from "@/domain/services/services-dto";
 import { createApiClient } from "@/utils/supabase/route";
 
-async function currentUserId() {
+async function authenticatedClient() {
   const supabase = await createApiClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user?.id ?? null;
+  return { supabase, user };
 }
 
 export async function GET() {
-  const userId = await currentUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { supabase, user } = await authenticatedClient();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    return NextResponse.json(await getMyServices(userId));
+    return NextResponse.json(await getMyServices(user.id, supabase));
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to load services" }, { status: 500 });
@@ -97,8 +97,8 @@ function parseInput(body: unknown): CreateServiceInput | null {
 }
 
 export async function POST(request: Request) {
-  const userId = await currentUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { supabase, user } = await authenticatedClient();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: unknown;
   try {
@@ -113,7 +113,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    return NextResponse.json({ service: await createMyService(userId, input) }, { status: 201 });
+    return NextResponse.json(
+      { service: await createMyService(user.id, input, supabase) },
+      { status: 201 },
+    );
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to create service" }, { status: 500 });
