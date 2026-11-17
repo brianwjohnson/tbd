@@ -141,11 +141,13 @@ export async function createMyService(
       [profile.first_name, profile.last_name].filter(Boolean).join(" ") ??
       "Service provider";
 
-    const { data: createdProvider, error: providerError } = await supabase
-      .from("service_providers")
-      .insert({ profile_id: userId, display_name: displayName || "Service provider" })
-      .select("*")
-      .single();
+    const { data: createdProvider, error: providerError } = await supabase.rpc(
+      "create_my_service_provider",
+      {
+        p_display_name: displayName || "Service provider",
+        p_bio: null,
+      },
+    );
     if (providerError) throw new Error(providerError.message);
     provider = createdProvider;
   }

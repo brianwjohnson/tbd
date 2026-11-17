@@ -4938,6 +4938,20 @@ export type Database = {
     }
     Functions: {
       _geom_from_geojson_4326: { Args: { p_geojson: Json }; Returns: unknown }
+      create_my_service_provider: {
+        Args: { p_bio?: string | null; p_display_name: string }
+        Returns: {
+          bio: string | null
+          created_at: string
+          display_name: string
+          entity_id: string | null
+          id: string
+          profile_id: string | null
+          slug: string | null
+          status: string
+          updated_at: string
+        }
+      }
       activate_scoped_nonprofits: {
         Args: { p_district_entity_id: string; p_eins?: string[] }
         Returns: {
