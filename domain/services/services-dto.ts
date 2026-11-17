@@ -1,7 +1,9 @@
 import "server-only";
 
 import type { Database } from "@/database.types";
-import { createClient } from "@/utils/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+type ServiceClient = SupabaseClient<Database>;
 
 type ProviderRow = Database["public"]["Tables"]["service_providers"]["Row"];
 type OfferingRow = Database["public"]["Tables"]["service_offerings"]["Row"];
@@ -45,7 +47,7 @@ export type CreateServiceInput = {
 };
 
 async function getOwnedProvider(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ServiceClient,
   userId: string,
 ): Promise<ProviderRow | null> {
   const { data, error } = await supabase
@@ -59,7 +61,7 @@ async function getOwnedProvider(
 }
 
 async function loadOfferings(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ServiceClient,
   providerId: string,
 ): Promise<ServiceOffering[]> {
   const { data: offerings, error: offeringsError } = await supabase
@@ -110,8 +112,10 @@ async function loadOfferings(
   return result;
 }
 
-export async function getMyServices(userId: string): Promise<MyServices> {
-  const supabase = await createClient();
+export async function getMyServices(
+  userId: string,
+  supabase: ServiceClient,
+): Promise<MyServices> {
   const provider = await getOwnedProvider(supabase, userId);
   if (!provider) return { provider: null, offerings: [] };
   return { provider, offerings: await loadOfferings(supabase, provider.id) };
@@ -120,8 +124,8 @@ export async function getMyServices(userId: string): Promise<MyServices> {
 export async function createMyService(
   userId: string,
   input: CreateServiceInput,
+  supabase: ServiceClient,
 ): Promise<ServiceOffering> {
-  const supabase = await createClient();
   let provider = await getOwnedProvider(supabase, userId);
 
   if (!provider) {
@@ -214,8 +218,8 @@ export async function updateMyServiceStatus(
   userId: string,
   serviceId: string,
   status: "draft" | "published" | "paused" | "archived",
+  supabase: ServiceClient,
 ): Promise<void> {
-  const supabase = await createClient();
   const { data: offering, error: offeringError } = await supabase
     .from("service_offerings")
     .select("provider_id")
