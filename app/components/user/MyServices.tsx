@@ -20,6 +20,7 @@ export default function MyServices() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
+  const [started, setStarted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -124,8 +125,18 @@ export default function MyServices() {
         {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
         {!loading && services.length === 0 && !open && (
-          <div className="rounded-2xl border border-dashed border-[#cbd5e1] px-4 py-5 text-sm text-[#64748b]">
-            No services yet.
+          <div className="rounded-2xl border border-dashed border-[#cbd5e1] px-4 py-5">
+            <p className="text-sm text-[#64748b]">No services yet.</p>
+            <button
+              type="button"
+              className="mt-3 rounded-xl bg-[#0f172a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1e293b]"
+              onClick={() => {
+                setStarted(true);
+                setOpen(true);
+              }}
+            >
+              Become a service provider
+            </button>
           </div>
         )}
 
@@ -154,7 +165,7 @@ export default function MyServices() {
           </div>
         ))}
 
-        {!open && (
+        {!open && (services.length > 0 || started) && (
           <button
             type="button"
             className="rounded-xl bg-[#0f172a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1e293b]"
