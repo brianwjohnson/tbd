@@ -389,7 +389,8 @@ export async function generateBusinessInvoicePdf(context: InvoiceContext) {
     summaryY -= 15;
   }
 
-  ctx.cursorY -= 14;
+  // Start the table below whichever side of the two-column summary extends lower.
+  ctx.cursorY = Math.min(ctx.cursorY - 14, summaryY - 4);
   drawRule(ctx);
 
   const drawItemsHeader = () => {

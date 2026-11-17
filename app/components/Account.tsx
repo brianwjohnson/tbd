@@ -4,6 +4,7 @@ import MyProfile from "@/app/components/user/MyProfile";
 import MyDistricts from "@/app/components/user/MyDistricts";
 import MyBusinesses from "@/app/components/user/MyBusinesses";
 import MyNonprofits from "@/app/components/user/MyNonprofits";
+import MyServices from "@/app/components/user/MyServices";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function AccountForm({ user }: { user: Profile | null }) {
@@ -27,6 +28,7 @@ export default function AccountForm({ user }: { user: Profile | null }) {
           <MyProfile />
         </div>
         <div className="space-y-4">
+          <MyServices />
           <MyBusinesses />
           <MyNonprofits />
           <MyDistricts />
