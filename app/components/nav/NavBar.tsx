@@ -129,7 +129,7 @@ function UserPopover({
   }, [open]);
 
   const menuItemClass =
-    "flex items-center gap-2 px-3 py-2 text-base hover:bg-brand-secondary-0";
+    "flex items-center gap-2 px-3 py-2 text-base normal-case hover:bg-brand-secondary-0";
 
   return (
     <div className="relative" ref={popoverRef}>
