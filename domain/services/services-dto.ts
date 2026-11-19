@@ -248,3 +248,109 @@ export async function updateMyServiceStatus(
     if (providerError) throw new Error(providerError.message);
   }
 }
+
+export async function updateMyService(
+  userId: string,
+  serviceId: string,
+  input: CreateServiceInput,
+  supabase: ServiceClient,
+): Promise<ServiceOffering> {
+  const { data: offering, error: offeringError } = await supabase
+    .from("service_offerings")
+    .select("provider_id")
+    .eq("id", serviceId)
+    .single();
+  if (offeringError) throw new Error(offeringError.message);
+
+  const provider = await getOwnedProvider(supabase, userId);
+  if (!provider || provider.id !== offering.provider_id) {
+    throw new Error("Not authorized");
+  }
+
+  const { error: offeringUpdateError } = await supabase
+    .from("service_offerings")
+    .update({
+      name: input.name,
+      description: input.description,
+    })
+    .eq("id", serviceId);
+  if (offeringUpdateError) throw new Error(offeringUpdateError.message);
+
+  const { data: existingPrice, error: priceLookupError } = await supabase
+    .from("service_offering_prices")
+    .select("id")
+    .eq("service_offering_id", serviceId)
+    .eq("is_default", true)
+    .maybeSingle();
+  if (priceLookupError) throw new Error(priceLookupError.message);
+
+  const pricePayload = {
+    amount_cents: input.amountCents,
+    unit_label: input.unitLabel,
+    currency_code: "USD",
+    is_default: true,
+  };
+  const { error: priceError } = existingPrice
+    ? await supabase
+        .from("service_offering_prices")
+        .update(pricePayload)
+        .eq("id", existingPrice.id)
+    : await supabase
+        .from("service_offering_prices")
+        .insert({ service_offering_id: serviceId, ...pricePayload });
+  if (priceError) throw new Error(priceError.message);
+
+  const { data: existingLocation, error: locationLookupError } = await supabase
+    .from("service_locations")
+    .select("id")
+    .eq("service_offering_id", serviceId)
+    .eq("is_primary", true)
+    .maybeSingle();
+  if (locationLookupError) throw new Error(locationLookupError.message);
+
+  const locationPayload = {
+    location_type: input.location.locationType,
+    label: input.location.label,
+    address1: input.location.address1,
+    city: input.location.city,
+    state: input.location.state,
+    postal: input.location.postal,
+    is_primary: true,
+    is_active: true,
+  };
+  const { error: locationError } = existingLocation
+    ? await supabase
+        .from("service_locations")
+        .update(locationPayload)
+        .eq("id", existingLocation.id)
+    : await supabase
+        .from("service_locations")
+        .insert({ service_offering_id: serviceId, ...locationPayload });
+  if (locationError) throw new Error(locationError.message);
+
+  const { error: deleteAvailabilityError } = await supabase
+    .from("service_availability_rules")
+    .delete()
+    .eq("service_offering_id", serviceId);
+  if (deleteAvailabilityError) throw new Error(deleteAvailabilityError.message);
+
+  if (input.availability.length > 0) {
+    const { error: availabilityError } = await supabase
+      .from("service_availability_rules")
+      .insert(
+        input.availability.map((rule) => ({
+          service_offering_id: serviceId,
+          day_of_week: rule.dayOfWeek,
+          start_time: rule.startTime,
+          end_time: rule.endTime,
+          timezone: rule.timezone,
+        })),
+      );
+    if (availabilityError) throw new Error(availabilityError.message);
+  }
+
+  const services = await loadOfferings(supabase, provider.id);
+  const updated = services.find((service) => service.id === serviceId);
+  if (!updated) throw new Error("Updated service could not be reloaded");
+  return updated;
+}

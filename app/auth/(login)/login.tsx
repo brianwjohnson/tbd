@@ -54,9 +54,9 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
   return (
     <div className="min-h-[100dvh] bg-gradient-to-b from-white to-gray-50 flex items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
-        {/* <div className="flex flex-grow"> */}
-        <AUNLogo backgroundWhite={true} />
-        {/* </div> */}
+        <div className="flex justify-center">
+          <AUNLogo backgroundWhite={true} />
+        </div>
 
         {(() => {
           const otpSent = Boolean(requestCodeState?.success);

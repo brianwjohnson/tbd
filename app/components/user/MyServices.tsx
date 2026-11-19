@@ -10,6 +10,17 @@ type Service = {
   status: string;
   service_type: string;
   price: { amount_cents: number; currency_code: string; unit_label: string } | null;
+  availability: Array<{
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+    timezone: string;
+  }>;
+  location: {
+    location_type: string;
+    city: string | null;
+    state: string | null;
+  } | null;
 };
 
 const inputClasses =
@@ -21,6 +32,7 @@ export default function MyServices() {
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [started, setStarted] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -58,13 +70,42 @@ export default function MyServices() {
     );
   }
 
-  async function addService(event: React.FormEvent<HTMLFormElement>) {
+  function resetForm() {
+    setName("");
+    setDescription("");
+    setAmount("");
+    setUnitLabel("pair");
+    setLocationType("custom");
+    setCity("");
+    setState("");
+    setDays([1, 2, 3, 4, 5]);
+    setStartTime("09:00");
+    setEndTime("17:00");
+    setEditingId(null);
+  }
+
+  function beginEditing(service: Service) {
+    setEditingId(service.id);
+    setName(service.name);
+    setDescription(service.description ?? "");
+    setAmount(service.price ? (service.price.amount_cents / 100).toFixed(2) : "");
+    setUnitLabel(service.price?.unit_label ?? "pair");
+    setLocationType(service.location?.location_type ?? "custom");
+    setCity(service.location?.city ?? "");
+    setState(service.location?.state ?? "");
+    setDays(service.availability.map((rule) => rule.day_of_week));
+    setStartTime(service.availability[0]?.start_time.slice(0, 5) ?? "09:00");
+    setEndTime(service.availability[0]?.end_time.slice(0, 5) ?? "17:00");
+    setOpen(true);
+  }
+
+  async function saveService(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setError(null);
     try {
-      const response = await fetch("/api/me/services", {
-        method: "POST",
+      const response = await fetch(editingId ? `/api/me/services/${editingId}` : "/api/me/services", {
+        method: editingId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
@@ -90,13 +131,12 @@ export default function MyServices() {
         const body = (await response.json()) as { error?: string };
         throw new Error(body.error ?? "Failed to create service");
       }
-      setName("");
-      setDescription("");
+      resetForm();
       setAmount("");
       setOpen(false);
       await loadServices();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create service");
+      setError(err instanceof Error ? err.message : "Failed to save service");
     } finally {
       setSaving(false);
     }
@@ -162,6 +202,13 @@ export default function MyServices() {
                 {service.status === "published" ? "Unpublish" : "Publish"}
               </button>
             </div>
+            <button
+              type="button"
+              className="mt-3 text-xs font-semibold text-[#475569] hover:text-[#1d4ed8] hover:underline"
+              onClick={() => beginEditing(service)}
+            >
+              Edit details
+            </button>
           </div>
         ))}
 
@@ -176,7 +223,8 @@ export default function MyServices() {
         )}
 
         {open && (
-          <form className="space-y-4 rounded-2xl border border-[#d7dce5] bg-white p-4" onSubmit={addService}>
+          <form className="space-y-4 rounded-2xl border border-[#d7dce5] bg-white p-4" onSubmit={saveService}>
+            <h3 className="text-sm font-semibold text-[#0f172a]">{editingId ? "Edit service" : "Add service"}</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="text-sm font-medium text-[#334155] sm:col-span-2">
                 Service name
@@ -221,8 +269,8 @@ export default function MyServices() {
               </div>
             </div>
             <div className="flex gap-2">
-              <button type="submit" disabled={saving} className="rounded-xl bg-[#0f172a] px-4 py-2.5 text-sm font-semibold text-white disabled:bg-[#94a3b8]">{saving ? "Saving..." : "Save service"}</button>
-              <button type="button" className="rounded-xl border border-[#cbd5e1] px-4 py-2.5 text-sm font-semibold text-[#334155]" onClick={() => setOpen(false)}>Cancel</button>
+              <button type="submit" disabled={saving} className="rounded-xl bg-[#0f172a] px-4 py-2.5 text-sm font-semibold text-white disabled:bg-[#94a3b8]">{saving ? "Saving..." : editingId ? "Save changes" : "Save service"}</button>
+              <button type="button" className="rounded-xl border border-[#cbd5e1] px-4 py-2.5 text-sm font-semibold text-[#334155]" onClick={() => { resetForm(); setOpen(false); }}>Cancel</button>
             </div>
           </form>
         )}
