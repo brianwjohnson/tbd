@@ -13,26 +13,26 @@ sequenceDiagram
   participant DB as Supabase public schema/PostGIS
   participant G as Google Maps client
 
-  U->>UI: Open map or select entity
-  UI->>API: Request current level / entity children
-  API->>DB: Load entity IDs, geometry rows, metadata and relationships
-  DB-->>API: GeoJSON/geometry rows
-  API->>API: Sanitize UUIDs; batch IDs in groups of 200; normalize Feature/geometry
-  API-->>UI: FeatureCollection or child payload
-  UI->>G: Render polygons, markers and bounds
-  U->>UI: Drill into district/entity
-  UI->>API: Request child geometry/metadata
-  API-->>UI: Next-level features
+  U->>UI: Open map
+  UI->>API: Request map level
+  API->>DB: Load geometry data
+  DB-->>API: GeoJSON rows
+  API->>API: Batch and normalize
+  API-->>UI: FeatureCollection
+  UI->>G: Render map features
+  U->>UI: Drill into entity
+  UI->>API: Request child data
+  API-->>UI: Child features
 ```
 
 ```mermaid
 stateDiagram-v2
   [*] --> Loading
   Loading --> Ready: valid rows and geometry
-  Loading --> Error: Supabase error / malformed payload
+  Loading --> Error: Query or payload error
   Ready --> Loading: drill-down or filter change
   Ready --> Cached: map home response cached
-  Cached --> Loading: explicit refresh or cache expiry
+  Cached --> Loading: Refresh or expiry
   Error --> Loading: retry
 ```
 
@@ -56,20 +56,20 @@ sequenceDiagram
   participant DB as public + irs schemas
   participant Detail as Nonprofit detail API
 
-  U->>UI: Open district and scoped nonprofit dashboard
-  UI->>Scope: GET /api/districts/:id/scope-nonprofits
-  Scope->>DB: Read v_district_scope_nonprofits by district_entity_id
-  DB-->>Scope: Scope status/tier, nonprofit and IRS fields
-  Scope-->>UI: Ordered scope rows
-  UI->>Summary: GET /api/superintendent/scope/summary?districtEntityId=...
-  Summary->>DB: Load scoped nonprofit data and IRS latest financials
+  U->>UI: Open district dashboard
+  UI->>Scope: Load nonprofit scope
+  Scope->>DB: Read scope view
+  DB-->>Scope: Scope rows
+  Scope-->>UI: Ordered rows
+  UI->>Summary: Request summary
+  Summary->>DB: Read IRS financials
   DB-->>Summary: Aggregation inputs
-  Summary-->>UI: KPI/trend summary
+  Summary-->>UI: KPI summary
   U->>UI: Open nonprofit detail
-  UI->>Detail: GET district/nonprofit/:ein
-  Detail->>DB: Read entity link, IRS overview, financials, narratives and people
-  DB-->>Detail: Detail payload
-  Detail-->>UI: Drill-down view
+  UI->>Detail: Request EIN detail
+  Detail->>DB: Read IRS detail
+  DB-->>Detail: Detail rows
+  Detail-->>UI: Detail view
 ```
 
 ```mermaid
@@ -78,7 +78,7 @@ stateDiagram-v2
   Candidate --> Active: scope update / activation
   Candidate --> Archived: archive
   Active --> Archived: archive
-  Archived --> Active: reactivation path if invoked
+  Archived --> Active: Reactivate
   Active --> Detailed: user opens EIN detail
   Detailed --> Active: back to scope
 ```
@@ -105,24 +105,24 @@ sequenceDiagram
   participant DB as Supabase service-role client
   participant Credit as AI credit RPC
 
-  Donor->>UI: Enter amount and optional district/entity
-  UI->>API: POST amount, districtId/entityId, anonymous flag
-  API->>API: Validate JSON and anonymous flag; require user when non-anonymous
-  API->>Stripe: Create payment/subscription checkout session
-  Stripe-->>API: session id
-  API-->>UI: session id
+  Donor->>UI: Enter donation
+  UI->>API: Submit donation
+  API->>API: Validate request
+  API->>Stripe: Create checkout session
+  Stripe-->>API: Session ID
+  API-->>UI: Session ID
   UI->>Stripe: Redirect to Checkout
-  Stripe-->>Webhook: Signed checkout/invoice/subscription event
-  Webhook->>Stripe: Construct/verify event; retrieve customer/receipt as needed
-  Webhook->>DB: Upsert donations/subscriptions by Stripe identifiers
+  Stripe-->>Webhook: Signed payment event
+  Webhook->>Stripe: Verify event
+  Webhook->>DB: Upsert payment records
   alt funding_purpose = ai_credits
-    Webhook->>Credit: grant_entity_ai_donation_credits(entity, donation, cents)
-    Credit->>DB: Ensure account; read active rate; idempotent ledger upsert
+    Webhook->>Credit: Grant AI credits
+    Credit->>DB: Write idempotent ledger
   end
-  DB-->>Webhook: Persisted reconciliation result
-  Webhook-->>Stripe: 200 received or 400 on failure
-  UI->>API: GET receipt/session after success
-  API-->>UI: Receipt/payment status
+  DB-->>Webhook: Reconciliation result
+  Webhook-->>Stripe: Success or retry
+  UI->>API: Request receipt
+  API-->>UI: Payment status
 ```
 
 ```mermaid

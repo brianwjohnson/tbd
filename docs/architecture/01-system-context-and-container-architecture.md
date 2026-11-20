@@ -6,35 +6,47 @@ This document describes the architecture evidenced by the current source tree, c
 
 Key evidence: `package.json`, `middleware.ts`, `utils/supabase/*`, `app/api/**`, `supabase/config.toml`, `supabase/migrations/**`, and the import scripts under `scripts/`.
 
-## C4 system context
+## System context view
 
 ```mermaid
-C4Context
-  title Ante Up Nation — verified system context
+flowchart LR
+  classDef actor fill:#E8F1FB,stroke:#2563EB,color:#0F172A,stroke-width:1px
+  classDef core fill:#FFF4D6,stroke:#B7791F,color:#3B2F0B,stroke-width:2px
+  classDef data fill:#E8F7EE,stroke:#218739,color:#12351E,stroke-width:1px
+  classDef external fill:#F3E8FF,stroke:#7C3AED,color:#2E1065,stroke-width:1px
+  classDef gap fill:#F8FAFC,stroke:#64748B,color:#334155,stroke-dasharray:5 5
 
-  Person(publicUser, "Public visitor / donor", "Browses public entity, district, nonprofit and map views; may donate anonymously")
-  Person(workspaceUser, "Authenticated workspace user", "Uses entity workspaces, governance, bookkeeping, people, documents and dashboards")
-  Person(platformAdmin, "Platform administrator", "Uses /admin routes and nonprofit/business onboarding tools")
-  System_Boundary(uta, "Ante Up Nation repository") {
-    System(web, "Next.js application", "Next.js 16 App Router, React 19, TypeScript, Tailwind; pages, server components, client components and API routes")
-  }
-  System_Ext(supabase, "Supabase project", "Postgres schemas, Auth, Storage, Data API/RPC, RLS and local development stack")
-  System_Ext(stripe, "Stripe", "Checkout, subscriptions, invoices, customers, payment webhooks and receipts")
-  System_Ext(googleMaps, "Google Maps APIs", "Browser map rendering and geocoding script usage evidenced in the repository")
-  System_Ext(irs, "IRS / public datasets", "IRS TEOS XML, Pub78/EOBMF-style registry data and Minnesota public education datasets")
-  System_Ext(mail, "SMTP / email provider", "Nodemailer transport; production SMTP is configuration-dependent")
-  System_Ext(deployGap, "Vercel / GCP deployment control plane", "No committed provider manifest or GitHub workflow found in this repository")
+  subgraph ACTORS[Actors]
+    direction TB
+    PUBLIC[Public visitor / donor]:::actor
+    WORKSPACE[Authenticated workspace user]:::actor
+    ADMIN[Platform administrator]:::actor
+  end
 
-  Rel(publicUser, web, "HTTPS")
-  Rel(workspaceUser, web, "HTTPS; Supabase session cookies")
-  Rel(platformAdmin, web, "HTTPS; admin routes")
-  Rel(web, supabase, "Server/client Supabase SDK; typed queries; RPCs")
-  Rel(web, stripe, "Checkout session creation; webhook verification and reconciliation")
-  Rel(web, googleMaps, "Maps JavaScript client; geocoding script uses Google endpoint")
-  Rel(web, mail, "Server-side email delivery where configured")
-  Rel(irs, web, "Import scripts download, parse and upsert data")
-  Rel(irs, supabase, "Service-role ingestion scripts write IRS/public-data schemas")
-  Rel(deployGap, web, "Target is not evidenced by repository configuration")
+  subgraph SYSTEM[Ante Up Nation]
+    WEB[Next.js application]:::core
+  end
+
+  subgraph EXTERNAL[External integrations]
+    STRIPE[Stripe]:::external
+    MAPS[Google Maps APIs]:::external
+    IRS[IRS / public datasets]:::external
+    MAIL[SMTP / email]:::external
+    DEPLOY[Vercel / GCP target]:::gap
+  end
+
+  SUPABASE[Supabase project]:::data
+
+  PUBLIC -->|HTTPS| WEB
+  WORKSPACE -->|Session| WEB
+  ADMIN -->|Admin HTTPS| WEB
+  WEB -->|Queries / RPCs| SUPABASE
+  WEB -->|Payments| STRIPE
+  WEB -->|Maps| MAPS
+  WEB -->|Email| MAIL
+  IRS -->|Imports| WEB
+  IRS -->|Service role| SUPABASE
+  DEPLOY -.->|Not evidenced| WEB
 ```
 
 ### Context interpretation
@@ -46,40 +58,48 @@ C4Context
 - IRS and Minnesota public-data ingestion are implemented as scripts, not as an in-request ETL service.
 - No GCP SDK, Cloud Run/Functions manifest, Cloud Build file, Terraform/Pulumi module, `vercel.json`, or `.github/workflows/**` file was found. Vercel/GCP deployment is therefore an operational assumption or external configuration, not a repository-proven container.
 
-## C4 container view
+## Container view
 
 ```mermaid
-C4Container
-  title Ante Up Nation — verified container view
+flowchart LR
+  classDef app fill:#FFF4D6,stroke:#B7791F,color:#3B2F0B,stroke-width:2px
+  classDef service fill:#E8F1FB,stroke:#2563EB,color:#0F172A,stroke-width:1px
+  classDef data fill:#E8F7EE,stroke:#218739,color:#12351E,stroke-width:1px
+  classDef external fill:#F3E8FF,stroke:#7C3AED,color:#2E1065,stroke-width:1px
 
-  Person(user, "User", "Public, authenticated workspace, or platform administrator")
-  System_Boundary(app, "Next.js application") {
-    Container(pages, "App Router pages", "TSX", "Public pages, entity/district/nonprofit/business workspaces, admin pages, donate and auth screens")
-    Container(api, "Route handlers", "TypeScript / NextRequest", "API surface under app/api: entities, map, districts, nonprofits, governance, bookkeeping, Stripe, admin and user routes")
-    Container(auth, "Session and authorization layer", "Supabase SSR + middleware + RBAC helpers", "Cookie refresh, platform role checks, entity role checks, board membership checks and validated actions")
-    Container(domain, "Domain services / DTOs", "TypeScript", "Entity, IRS, governance, bookkeeping, branding, map, services, admin and AI credit orchestration")
-    Container(imports, "Data import utilities", "tsx scripts", "IRS XML/ZIP ingestion, MDE/state/district/geospatial imports, geocoding and seed/verification utilities")
-  }
-  System_Ext(db, "Supabase Postgres", "public, branding, governance, irs and business schemas; PostGIS/pg_trgm")
-  System_Ext(storage, "Supabase Storage", "Configured local Storage; assets/documents reference buckets and paths")
-  System_Ext(stripe, "Stripe", "Payments and billing")
-  System_Ext(maps, "Google Maps / Geocoding", "Map client and geocoding")
-  System_Ext(publicData, "IRS / Minnesota public data", "Downloadable source datasets")
-  System_Ext(smtp, "SMTP", "Nodemailer mail transport when configured")
+  subgraph NEXT[Next.js application]
+    direction TB
+    PAGES[App Router pages]:::app
+    API[Route handlers]:::service
+    AUTH[Session and RBAC]:::service
+    DOMAIN[Domain services / DTOs]:::service
+    IMPORTS[Data import scripts]:::service
+    PAGES -->|Fetch / actions| API
+    PAGES -->|Session context| AUTH
+    API -->|Authorize| AUTH
+    API -->|Call domain| DOMAIN
+  end
 
-  Rel(user, pages, "Browses and interacts")
-  Rel(pages, api, "fetch / form actions")
-  Rel(pages, auth, "Supabase browser/session context")
-  Rel(api, auth, "gets user and enforces route/entity/board authorization")
-  Rel(api, domain, "calls domain DTOs and server services")
-  Rel(domain, db, "typed Supabase queries and RPCs")
-  Rel(api, db, "server client or service-role client for selected public/webhook paths")
-  Rel(api, storage, "asset upload URLs and document/file references")
-  Rel(api, stripe, "creates sessions; webhook receives events")
-  Rel(pages, maps, "renders maps")
-  Rel(imports, publicData, "downloads source files")
-  Rel(imports, db, "service-role upserts and RPC calls")
-  Rel(api, smtp, "sends emails/invoices when configured")
+  subgraph DATA[Supabase platform]
+    DB[Postgres schemas]:::data
+    STORAGE[Supabase Storage]:::data
+  end
+
+  subgraph INTEGRATIONS[External integrations]
+    STRIPE[Stripe]:::external
+    MAPS[Google Maps]:::external
+    PUBLICDATA[IRS / Minnesota data]:::external
+    SMTP[SMTP]:::external
+  end
+
+  DOMAIN -->|Typed queries| DB
+  API -->|Server queries| DB
+  API -->|Asset paths| STORAGE
+  API -->|Checkout / webhook| STRIPE
+  PAGES -->|Map render| MAPS
+  IMPORTS -->|Download| PUBLICDATA
+  IMPORTS -->|Service role| DB
+  API -->|Send mail| SMTP
 ```
 
 ## Technology stack decision matrix
