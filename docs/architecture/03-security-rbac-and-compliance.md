@@ -16,21 +16,21 @@ sequenceDiagram
   participant A as Supabase Auth
   participant DB as Postgres / RLS
 
-  U->>B: Sign up, sign in, OAuth, callback or sign out
-  B->>SSR: Auth action / callback route
-  SSR->>A: Authenticate or exchange callback code
+  U->>B: Start auth flow
+  B->>SSR: Auth request
+  SSR->>A: Authenticate user
   A-->>SSR: Session and user
   SSR-->>B: Set auth cookies
-  B->>M: Subsequent request
-  M->>SSR: createServerClient with request cookies
-  SSR->>A: getUser / refresh session
+  B->>M: Send request
+  M->>SSR: Read session cookies
+  SSR->>A: Refresh session
   A-->>SSR: Current user or unauthenticated
-  SSR-->>M: Refreshed cookies and user context
-  M->>DB: Read profile and entity memberships when user exists
-  DB-->>M: Global role plus entity roles
-  M-->>B: Continue or redirect unauthorized route
-  B->>DB: Server/client query with user session
-  DB-->>B: Grants + RLS-filtered data
+  SSR-->>M: Refreshed session
+  M->>DB: Read roles
+  DB-->>M: Role context
+  M-->>B: Continue or redirect
+  B->>DB: Query with session
+  DB-->>B: RLS-filtered data
 ```
 
 Evidence: `middleware.ts`, `utils/supabase/middleware.ts`, `utils/supabase/server.ts`, `app/auth/**`, `app/lib/auth/platformAdmin.ts`, and `supabase/config.toml`. Local Auth has refresh-token rotation enabled, one-hour JWT expiry, signup enabled, anonymous sign-in disabled, and MFA enrollment/verification disabled in the committed local config.
@@ -47,27 +47,27 @@ sequenceDiagram
   participant DB as Postgres RLS
 
   alt Public read path
-    U->>R: GET public entity/map/district endpoint
-    R->>DB: anon or server/service query
-    DB-->>R: Public policy/view rows
-    R-->>U: JSON/page payload
+    U->>R: Public GET
+    R->>DB: Public query
+    DB-->>R: Public rows
+    R-->>U: Page payload
   else Authenticated entity workspace
-    U->>R: GET/POST /api/entities/:id/... 
-    R->>S: getUser()
-    S->>RBAC: requireEntityUser/admin/manager
-    RBAC->>DB: entity_users or role RPC
-    DB-->>RBAC: active membership decision
-    RBAC-->>R: allow or Unauthorized
-    R->>DB: Typed query/RPC with session
-    DB-->>R: RLS-filtered rows
-    R-->>U: JSON/page payload
+    U->>R: Workspace request
+    R->>S: Read user
+    S->>RBAC: Check entity role
+    RBAC->>DB: Read membership
+    DB-->>RBAC: Membership result
+    RBAC-->>R: Allow or deny
+    R->>DB: Scoped query
+    DB-->>R: Scoped rows
+    R-->>U: Workspace payload
   else Platform admin
-    U->>R: /admin or admin API
-    R->>S: getUser()
-    S->>RBAC: profile.role or ADMIN_ALLOWLIST
-    RBAC-->>R: allow or Unauthorized
-    R->>DB: Admin query; selected workflows use server-role client
-    DB-->>R: Result
+    U->>R: Admin request
+    R->>S: Read user
+    S->>RBAC: Check admin role
+    RBAC-->>R: Allow or deny
+    R->>DB: Admin query
+    DB-->>R: Admin result
     R-->>U: Response or redirect
   end
 ```
