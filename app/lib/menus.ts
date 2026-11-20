@@ -43,7 +43,15 @@ function Menus() {
     {
       name: "Explore",
       authRequired: false,
-      subMenu: [],
+      subMenu: [
+        {
+          name: "Services",
+          desc: "Find community service providers",
+          icon: "users",
+          path: "/services",
+          method: "GET",
+        },
+      ],
       gridCols: 1,
       path: "/entities",
     },

@@ -23,6 +23,14 @@ export type MyServices = {
   offerings: ServiceOffering[];
 };
 
+export type PublicServiceProvider = ProviderRow & {
+  profile: Pick<
+    Database["public"]["Tables"]["profiles"]["Row"],
+    "id" | "full_name" | "username" | "avatar_url" | "website"
+  > | null;
+  offerings: ServiceOffering[];
+};
+
 export type CreateServiceInput = {
   name: string;
   description: string | null;
@@ -119,6 +127,68 @@ export async function getMyServices(
   const provider = await getOwnedProvider(supabase, userId);
   if (!provider) return { provider: null, offerings: [] };
   return { provider, offerings: await loadOfferings(supabase, provider.id) };
+}
+
+export async function getPublicServiceProviders(
+  supabase: ServiceClient,
+): Promise<PublicServiceProvider[]> {
+  const { data: providers, error: providerError } = await supabase
+    .from("service_providers")
+    .select("*")
+    .eq("status", "published")
+    .order("display_name", { ascending: true });
+  if (providerError) throw new Error(providerError.message);
+
+  const profileIds = (providers ?? [])
+    .map((provider) => provider.profile_id)
+    .filter((profileId): profileId is string => Boolean(profileId));
+  const { data: profiles, error: profilesError } = profileIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url, website")
+        .in("id", profileIds)
+    : { data: [], error: null };
+  if (profilesError) throw new Error(profilesError.message);
+
+  const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+  const publicProviders: PublicServiceProvider[] = [];
+  for (const provider of providers ?? []) {
+    const offerings = await loadOfferings(supabase, provider.id);
+    if (offerings.length === 0) continue;
+    publicProviders.push({
+      ...provider,
+      profile: provider.profile_id ? profileById.get(provider.profile_id) ?? null : null,
+      offerings,
+    });
+  }
+  return publicProviders;
+}
+
+export async function getPublicServiceProvider(
+  providerId: string,
+  supabase: ServiceClient,
+): Promise<PublicServiceProvider | null> {
+  const { data: provider, error: providerError } = await supabase
+    .from("service_providers")
+    .select("*")
+    .eq("id", providerId)
+    .eq("status", "published")
+    .maybeSingle();
+  if (providerError) throw new Error(providerError.message);
+  if (!provider) return null;
+
+  const offerings = await loadOfferings(supabase, provider.id);
+  if (offerings.length === 0) return null;
+
+  const profile = provider.profile_id
+    ? (await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url, website")
+        .eq("id", provider.profile_id)
+        .maybeSingle()).data
+    : null;
+
+  return { ...provider, profile, offerings };
 }
 
 export async function createMyService(
