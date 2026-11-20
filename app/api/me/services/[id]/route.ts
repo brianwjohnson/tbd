@@ -8,8 +8,9 @@ import { createApiClient } from "@/utils/supabase/route";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   const supabase = await createApiClient();
   const {
     data: { user },
@@ -32,7 +33,7 @@ export async function PATCH(
       }
       await updateMyServiceStatus(
         user.id,
-        params.id,
+        id,
         status as "draft" | "published" | "paused" | "archived",
         supabase,
       );
@@ -41,7 +42,7 @@ export async function PATCH(
 
     const input = parseDetails(body);
     if (!input) return NextResponse.json({ error: "Invalid service details" }, { status: 400 });
-    return NextResponse.json({ service: await updateMyService(user.id, params.id, input, supabase) });
+    return NextResponse.json({ service: await updateMyService(user.id, id, input, supabase) });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to update service" }, { status: 500 });
