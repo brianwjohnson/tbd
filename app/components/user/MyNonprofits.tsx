@@ -26,7 +26,7 @@ export default function MyNonprofits() {
     <AccordionCard title="My Nonprofits">
       <div className="space-y-2">
         {nonprofits.map((n) => {
-          const name = n.entity_id;
+          const name = n.entity_name ?? n.entity_id;
           const nonprofitId = n.entity_id;
           return (
             <div

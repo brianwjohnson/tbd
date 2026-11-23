@@ -48,7 +48,11 @@ export async function PATCH(request: Request) {
         const value = record[field];
         if (value === undefined) continue;
         if (value === null || typeof value === "string") {
-            update[field] = value as ProfileUpdate[typeof field];
+            // Optional text inputs submit an empty string when left blank.
+            // Store those as NULL so the username length constraint does not
+            // reject an otherwise valid profile update.
+            const normalized = typeof value === "string" ? value.trim() : value;
+            update[field] = (normalized === "" ? null : normalized) as ProfileUpdate[typeof field];
             continue;
         }
         return NextResponse.json(
@@ -59,13 +63,14 @@ export async function PATCH(request: Request) {
 
     const { error: updateError } = await supabase
         .from("profiles")
-        .upsert({ id: user.id, ...update });
+        .update(update)
+        .eq("id", user.id);
 
     if (updateError) {
         console.error(updateError);
         return NextResponse.json(
-            { error: "Failed to update profile" },
-            { status: 500 },
+            { error: `Failed to update profile: ${updateError.message}` },
+            { status: 400 },
         );
     }
 

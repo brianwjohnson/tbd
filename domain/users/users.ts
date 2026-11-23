@@ -12,8 +12,14 @@ type EntityUserRow = {
   status?: EntityUser["status"];
   created_at?: string | null;
   entities?:
-    | { entity_type?: EntityUser["entity_type"] | null }[]
-    | { entity_type?: EntityUser["entity_type"] | null }
+    | {
+        entity_type?: EntityUser["entity_type"] | null;
+        name?: string | null;
+      }[]
+    | {
+        entity_type?: EntityUser["entity_type"] | null;
+        name?: string | null;
+      }
     | null;
 };
 
@@ -50,6 +56,7 @@ const mapEntityUsers = (
       created_at: eu.created_at ?? null,
       updated_at: null,
       entity_type: entity?.entity_type ?? undefined,
+      entity_name: entity?.name ?? null,
     };
   });
 
@@ -69,7 +76,8 @@ export async function getAllUsers(): Promise<Profile[]> {
         status,
         created_at,
         entities:entities (
-          entity_type
+          entity_type,
+          name
         )
       )
     `,
@@ -112,7 +120,8 @@ export async function getUser(id: string): Promise<Profile> {
         status,
         created_at,
         entities:entities (
-          entity_type
+          entity_type,
+          name
         )
       )
     `,
