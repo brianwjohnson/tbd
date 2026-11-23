@@ -31,6 +31,7 @@ export interface EntityUser {
   id: string;
   entity_type?: EntityType;
   entity_id: string;
+  entity_name?: string | null;
   user_id: string;
   role: EntityUserRole;
   status?: EntityUserStatus;

@@ -26,7 +26,7 @@ export default function MyDistricts() {
     <AccordionCard title="My Districts">
       <div className="space-y-2">
         {districts.map((d) => {
-          const shortname = d.entity_id;
+          const shortname = d.entity_name ?? d.entity_id;
           const districtId = d.entity_id;
           return (
             <div

@@ -26,7 +26,7 @@ export default function MyBusinesses() {
     <AccordionCard title="My Businesses">
       <div className="space-y-2">
         {businesses.map((b) => {
-          const name = b.entity_id;
+          const name = b.entity_name ?? b.entity_id;
           const businessId = b.entity_id;
           return (
             <div
