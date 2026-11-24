@@ -14,13 +14,16 @@ type ProfileUpdatePayload = {
   avatar_url?: string | null;
 };
 
+type ProfileSaveState = "idle" | "saving" | "saved";
+
 export default function MyProfile({
   defaultOpen = true,
 }: {
   defaultOpen?: boolean;
 }) {
   const { user, refreshUser } = useUser();
-  const [loading, setLoading] = useState(false);
+  const [saveState, setSaveState] = useState<ProfileSaveState>("idle");
+  const savedStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [open, setOpen] = useState(defaultOpen);
   const [fullname, setFullname] = useState<string>(user?.full_name ?? "");
   const [firstName, setFirstName] = useState<string | null>(
@@ -62,6 +65,14 @@ export default function MyProfile({
     setAvatarUrl(snapshot.avatar_url);
   }, [user]);
 
+  useEffect(() => {
+    return () => {
+      if (savedStateTimerRef.current) {
+        clearTimeout(savedStateTimerRef.current);
+      }
+    };
+  }, []);
+
   const hasChanges = (() => {
     if (!user) return false;
     const initial = initialValuesRef.current;
@@ -89,6 +100,17 @@ export default function MyProfile({
     }
   }
 
+  function setSavedState() {
+    if (savedStateTimerRef.current) {
+      clearTimeout(savedStateTimerRef.current);
+    }
+    setSaveState("saved");
+    savedStateTimerRef.current = setTimeout(() => {
+      setSaveState("idle");
+      savedStateTimerRef.current = null;
+    }, 2000);
+  }
+
   async function updateProfile({
     username,
     fullname,
@@ -106,7 +128,11 @@ export default function MyProfile({
   }) {
     if (!user) return;
     try {
-      setLoading(true);
+      if (savedStateTimerRef.current) {
+        clearTimeout(savedStateTimerRef.current);
+        savedStateTimerRef.current = null;
+      }
+      setSaveState("saving");
       await patchProfile({
         full_name: fullname,
         first_name: firstName,
@@ -115,30 +141,50 @@ export default function MyProfile({
         website,
         avatar_url,
       });
+
+      initialValuesRef.current = {
+        full_name: fullname ?? "",
+        first_name: firstName ?? "",
+        last_name: lastName ?? "",
+        username: username ?? "",
+        website: website ?? "",
+        avatar_url: avatar_url ?? "",
+      };
       await refreshUser();
-      alert("Profile updated!");
+      setSavedState();
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : JSON.stringify(error);
+      setSaveState("idle");
       alert("Error updating the data: " + message);
-    } finally {
-      setLoading(false);
     }
   }
 
   async function updateAvatarUrl(url: string | null) {
     if (!user) return;
     try {
-      setLoading(true);
+      if (savedStateTimerRef.current) {
+        clearTimeout(savedStateTimerRef.current);
+        savedStateTimerRef.current = null;
+      }
+      setSaveState("saving");
       await patchProfile({ avatar_url: url });
+      initialValuesRef.current.avatar_url = url ?? "";
       await refreshUser();
+      setSavedState();
     } catch (error: unknown) {
       console.error("Error updating avatar:", error);
+      setSaveState("idle");
       alert("Error updating avatar");
-    } finally {
-      setLoading(false);
     }
   }
+
+  const profileButtonLabel =
+    saveState === "saving"
+      ? "Saving..."
+      : "Update Profile";
+  const showSavedState = saveState === "saved" && !hasChanges;
+  const profileButtonDisabled = saveState === "saving" || !hasChanges;
 
   const inputClasses =
     "h-11 w-full rounded-xl border border-[#cbd5e1] bg-white px-3 text-sm text-[#0f172a] shadow-sm transition placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]";
@@ -159,7 +205,6 @@ export default function MyProfile({
             }}
             secondaryAction={
               <button
-                className="w-full rounded-xl bg-[#0f172a] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1e293b] disabled:cursor-not-allowed disabled:bg-[#94a3b8]"
                 onClick={() =>
                   updateProfile({
                     username,
@@ -170,9 +215,33 @@ export default function MyProfile({
                     lastName,
                   })
                 }
-                disabled={loading || !hasChanges}
+                disabled={profileButtonDisabled}
+                className={`relative inline-flex w-full min-w-[140px] items-center justify-center overflow-hidden rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all duration-500 ease-in-out disabled:cursor-not-allowed disabled:bg-[#94a3b8] ${
+                  showSavedState
+                    ? "bg-emerald-600 hover:bg-emerald-600"
+                    : "bg-[#0f172a] hover:bg-[#1e293b]"
+                }`}
               >
-                {loading ? "Saving..." : "Update Profile"}
+                <span
+                  className={`inline-flex items-center transition-all duration-500 ease-in-out ${
+                    showSavedState
+                      ? "-translate-y-2 opacity-0"
+                      : "translate-y-0 opacity-100"
+                  }`}
+                >
+                  {profileButtonLabel}
+                </span>
+                <span
+                  aria-hidden={!showSavedState}
+                  className={`absolute inset-0 inline-flex items-center justify-center gap-1.5 transition-all duration-500 ease-in-out ${
+                    showSavedState
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-2 opacity-0"
+                  }`}
+                >
+                  <span aria-hidden="true">✓</span>
+                  Saved
+                </span>
               </button>
             }
           />

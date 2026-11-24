@@ -45,10 +45,17 @@ function Menus() {
       authRequired: false,
       subMenu: [
         {
+          name: "Directory",
+          desc: "Search districts, businesses, and nonprofits",
+          icon: "users",
+          path: "/explore",
+          method: "GET",
+        },
+        {
           name: "Services",
           desc: "Find community service providers",
           icon: "users",
-          path: "/services",
+          path: "/explore?tab=services",
           method: "GET",
         },
       ],
