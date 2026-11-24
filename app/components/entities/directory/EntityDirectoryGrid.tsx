@@ -27,6 +27,7 @@ type Props = {
    * Defaults to true when initialType is not provided.
    */
   allowTypeSwitch?: boolean;
+  basePath?: string;
 };
 
 const FILTER_LABELS: Record<UiDirectoryFilter, string> = {
@@ -45,6 +46,7 @@ const TYPE_LABELS: Partial<Record<EntityType, string>> = {
 export default function EntityDirectoryGrid({
   initialType,
   allowTypeSwitch,
+  basePath = "/entities",
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -216,9 +218,9 @@ export default function EntityDirectoryGrid({
     setActiveType(key);
     if (allowTypeSwitch && !initialType) {
       if (key === "all") {
-        router.replace("/entities");
+        router.replace(basePath);
       } else {
-        router.replace(`/entities?type=${key}`);
+        router.replace(`${basePath}?type=${key}`);
       }
     }
   };
